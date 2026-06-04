@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Иргэний Боловсрол</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,600;1,400&family=Noto+Sans+Mongolian&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg2: #161b24;
+    --bg3: #1e2535;
+    --bg4: #242c40;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #e2e8f0;
+    --muted: #7c8ca8;
+    --hint: #4a556b;
+    --accent: #4f8ef7;
+    --accent2: #7eb8ff;
+    --gold: #d4a843;
+    --gold2: #f0c96a;
+    --teal: #2dd4bf;
+    --sidebar-w: 280px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    overflow: hidden;
+  }
+
+  /* ── LAYOUT ── */
+  .shell { display: flex; height: 100vh; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: var(--sidebar-w);
+    min-width: var(--sidebar-w);
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: width 0.3s ease;
+  }
+  .sidebar.collapsed { width: 0; min-width: 0; }
+
+  .sidebar-head {
+    padding: 22px 20px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .logo-icon {
+    width: 34px; height: 34px;
+    background: linear-gradient(135deg, var(--gold), var(--accent));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  .logo-text { font-size: 13px; font-weight: 500; line-height: 1.3; color: var(--text); }
+  .logo-sub { font-size: 11px; color: var(--muted); font-weight: 400; }
+
+  .progress-wrap {
+    background: var(--border);
+    border-radius: 100px;
+    height: 3px;
+    margin-bottom: 6px;
+  }
+  .progress-fill {
+    height: 3px;
+    border-radius: 100px;
+    background: linear-gradient(90deg, var(--gold), var(--accent));
+    transition: width 0.5s ease;
+  }
+  .progress-label { font-size: 11px; color: var(--muted); }
+
+  .sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 0; }
+  .sidebar-nav::-webkit-scrollbar { width: 4px; }
+  .sidebar-nav::-webkit-scrollbar-track { background: transparent; }
+  .sidebar-nav::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  .nav-chapter { margin-bottom: 4px; }
+  .nav-ch-btn {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; padding: 9px 16px;
+    background: none; border: none; cursor: pointer;
+    color: var(--muted); font-size: 13px; font-family: 'DM Sans', sans-serif;
+    text-align: left; border-radius: 0;
+    transition: all 0.15s;
+  }
+  .nav-ch-btn:hover { background: var(--bg3); color: var(--text); }
+  .nav-ch-btn.active { color: var(--accent2); background: rgba(79,142,247,0.08); }
+  .nav-ch-dot {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--bg3); border: 1.5px solid var(--border2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 500; flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .nav-ch-btn.active .nav-ch-dot { background: var(--accent); border-color: var(--accent); color: white; }
+  .nav-ch-btn.done .nav-ch-dot { background: var(--teal); border-color: var(--teal); color: white; }
+  .nav-ch-title { flex: 1; line-height: 1.3; }
+  .nav-ch-num { font-size: 10px; color: var(--hint); }
+  .nav-ch-arrow { font-size: 11px; transition: transform 0.2s; }
+  .nav-ch-btn.open .nav-ch-arrow { transform: rotate(90deg); }
+
+  .nav-sections { overflow: hidden; max-height: 0; transition: max-height 0.3s ease; }
+  .nav-sections.open { max-height: 300px; }
+  .nav-sec-btn {
+    display: flex; align-items: baseline; gap: 8px;
+    width: 100%; padding: 6px 16px 6px 48px;
+    background: none; border: none; cursor: pointer;
+    color: var(--hint); font-size: 12px; font-family: 'DM Sans', sans-serif;
+    text-align: left; transition: color 0.15s;
+  }
+  .nav-sec-btn:hover { color: var(--muted); }
+  .nav-sec-btn.active { color: var(--accent2); }
+  .nav-sec-num { font-size: 10px; color: var(--hint); }
+
+  /* ── MAIN ── */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  .topbar {
+    height: 52px; padding: 0 24px;
+    display: flex; align-items: center; gap: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2); flex-shrink: 0;
+  }
+  .menu-btn {
+    width: 32px; height: 32px; border-radius: 6px;
+    background: none; border: 1px solid var(--border2);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    color: var(--muted); font-size: 16px;
+    transition: all 0.15s;
+  }
+  .menu-btn:hover { background: var(--bg3); color: var(--text); }
+  .breadcrumb { font-size: 13px; color: var(--muted); flex: 1; }
+  .breadcrumb span { color: var(--text); }
+  .view-tabs { display: flex; gap: 4px; }
+  .view-tab {
+    padding: 5px 12px; border-radius: 6px; font-size: 12px;
+    background: none; border: 1px solid transparent; cursor: pointer;
+    color: var(--muted); font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+  }
+  .view-tab.active { background: var(--bg3); border-color: var(--border2); color: var(--text); }
+  .view-tab:hover:not(.active) { color: var(--text); }
+
+  /* ── CONTENT AREA ── */
+  .content-area { flex: 1; overflow-y: auto; }
+  .content-area::-webkit-scrollbar { width: 5px; }
+  .content-area::-webkit-scrollbar-track { background: transparent; }
+  .content-area::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  /* ── ROADMAP VIEW ── */
+  .roadmap-view { padding: 36px 48px; max-width: 760px; margin: 0 auto; }
+
+  .rm-hero {
+    text-align: center;
+    padding: 40px 0 48px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+  }
+  .rm-hero-label {
+    display: inline-block;
+    font-size: 11px; font-weight: 500; letter-spacing: 2px;
+    color: var(--gold); text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .rm-hero h1 {
+    font-family: 'Noto Serif', serif;
+    font-size: 32px; font-weight: 600;
+    color: var(--text);
+    line-height: 1.3; margin-bottom: 10px;
+  }
+  .rm-hero p { font-size: 15px; color: var(--muted); max-width: 440px; margin: 0 auto; }
+
+  .rm-stats {
+    display: flex; gap: 24px; justify-content: center; margin-top: 24px;
+  }
+  .rm-stat {
+    text-align: center;
+    padding: 14px 24px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  .rm-stat-n { font-size: 22px; font-weight: 500; color: var(--text); }
+  .rm-stat-l { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .rm-track { position: relative; padding-left: 40px; }
+  .rm-vline {
+    position: absolute; left: 10px; top: 16px; bottom: 16px;
+    width: 2px; background: var(--border2);
+  }
+
+  .rm-stop { position: relative; margin-bottom: 12px; }
+  .rm-dot {
+    position: absolute; left: -34px; top: 16px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: var(--bg); border: 2px solid var(--border2);
+    cursor: pointer; transition: all 0.2s; z-index: 1;
+  }
+  .rm-stop.open .rm-dot { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 4px rgba(79,142,247,0.15); }
+
+  .rm-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 18px;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; cursor: pointer;
+    transition: all 0.18s;
+  }
+  .rm-header:hover { border-color: var(--border2); background: var(--bg3); }
+  .rm-stop.open .rm-header {
+    border-color: rgba(79,142,247,0.35);
+    border-radius: 10px 10px 0 0;
+    background: var(--bg3);
+  }
+  .rm-badge {
+    font-size: 11px; font-weight: 500; padding: 3px 10px;
+    border-radius: 100px; background: rgba(79,142,247,0.12);
+    color: var(--accent2); white-space: nowrap; flex-shrink: 0;
+  }
+  .rm-title { flex: 1; font-size: 14px; font-weight: 500; color: var(--text); }
+  .rm-pages { font-size: 11px; color: var(--hint); }
+  .rm-arrow {
+    font-size: 13px; color: var(--hint);
+    transition: transform 0.22s;
+  }
+  .rm-stop.open .rm-arrow { transform: rotate(180deg); }
+
+  .rm-body {
+    background: var(--bg3); border: 1px solid rgba(79,142,247,0.2);
+    border-top: none; border-radius: 0 0 10px 10px;
+    overflow: hidden; max-height: 0; transition: max-height 0.35s ease;
+  }
+  .rm-stop.open .rm-body { max-height: 400px; }
+  .rm-body-inner { padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; }
+
+  .rm-sec {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 10px 14px;
+    background: var(--bg2); border-radius: 8px;
+    border: 1px solid var(--border);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .rm-sec:hover { border-color: var(--border2); background: var(--bg4); }
+  .rm-sec-num { font-size: 11px; font-weight: 500; color: var(--accent); min-width: 24px; padding-top: 2px; }
+  .rm-sec-title { flex: 1; font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .rm-sec-pg { font-size: 11px; color: var(--hint); white-space: nowrap; padding-top: 2px; }
+
+  /* ── READER VIEW ── */
+  .reader-view { display: none; padding: 40px 48px; max-width: 720px; margin: 0 auto; }
+  .reader-view.active { display: block; }
+  .roadmap-view.hidden { display: none; }
+
+  .chapter-nav {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 36px;
+  }
+  .ch-nav-btn {
+    padding: 6px 14px; border-radius: 6px; font-size: 12px;
+    background: var(--bg2); border: 1px solid var(--border2);
+    color: var(--muted); cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+  }
+  .ch-nav-btn:hover { background: var(--bg3); color: var(--text); }
+  .ch-nav-spacer { flex: 1; }
+
+  .ch-label {
+    font-size: 11px; font-weight: 500; letter-spacing: 2px;
+    color: var(--gold); text-transform: uppercase; margin-bottom: 8px;
+  }
+  .ch-title {
+    font-family: 'Noto Serif', serif;
+    font-size: 28px; font-weight: 600; color: var(--text);
+    line-height: 1.3; margin-bottom: 28px;
+    padding-bottom: 20px; border-bottom: 1px solid var(--border);
+  }
+
+  .section-block { margin-bottom: 40px; }
+  .sec-heading {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+  }
+  .sec-heading-num {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: rgba(79,142,247,0.1); border: 1px solid rgba(79,142,247,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 500; color: var(--accent); flex-shrink: 0;
+  }
+  .sec-heading-title {
+    font-size: 17px; font-weight: 500; color: var(--text);
+    font-family: 'Noto Serif', serif;
+  }
+  .sec-page { font-size: 11px; color: var(--hint); margin-left: auto; }
+
+  .sec-body {
+    padding: 18px 20px;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; border-left: 3px solid rgba(79,142,247,0.4);
+  }
+  .sec-body p { font-size: 14px; color: var(--muted); line-height: 1.8; margin-bottom: 10px; }
+  .sec-body p:last-child { margin-bottom: 0; }
+
+  .key-points {
+    margin-top: 14px; padding: 14px;
+    background: var(--bg3); border-radius: 8px;
+  }
+  .kp-title { font-size: 11px; font-weight: 500; color: var(--gold); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+  .kp-item {
+    display: flex; align-items: flex-start; gap: 8px;
+    font-size: 13px; color: var(--muted); margin-bottom: 6px; line-height: 1.5;
+  }
+  .kp-item:last-child { margin-bottom: 0; }
+  .kp-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); margin-top: 6px; flex-shrink: 0; }
+
+  .dugnel-box {
+    margin-top: 32px; padding: 20px;
+    background: rgba(79,142,247,0.05);
+    border: 1px solid rgba(79,142,247,0.2);
+    border-radius: 10px;
+  }
+  .dugnel-label { font-size: 11px; font-weight: 500; color: var(--accent2); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+  .dugnel-box p { font-size: 14px; color: var(--muted); line-height: 1.8; }
+
+  /* ── FOOTER ── */
+  .reader-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 24px 0 40px;
+    border-top: 1px solid var(--border); margin-top: 40px;
+  }
+  .rf-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 18px; border-radius: 8px;
+    background: var(--bg2); border: 1px solid var(--border2);
+    color: var(--muted); cursor: pointer; font-size: 13px;
+    font-family: 'DM Sans', sans-serif; transition: all 0.15s;
+  }
+  .rf-btn:hover { background: var(--bg3); color: var(--text); }
+  .rf-btn.primary { background: rgba(79,142,247,0.1); border-color: rgba(79,142,247,0.3); color: var(--accent2); }
+  .rf-btn.primary:hover { background: rgba(79,142,247,0.18); }
+
+  @media (max-width: 680px) {
+    .roadmap-view, .reader-view { padding: 24px 20px; }
+    .rm-hero h1 { font-size: 24px; }
+    .rm-stats { flex-wrap: wrap; }
+    .ch-title { font-size: 22px; }
+    .sidebar { position: fixed; left: 0; top: 0; height: 100vh; z-index: 100; transform: translateX(-100%); transition: transform 0.3s; }
+    .sidebar.mob-open { transform: translateX(0); }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <div class="sidebar-logo">
+        <div class="logo-icon">📖</div>
+        <div>
+          <div class="logo-text">Иргэний Боловсрол</div>
+          <div class="logo-sub">Цахим сурах бичиг</div>
+        </div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-fill" id="sidebar-progress" style="width:0%"></div>
+      </div>
+      <div class="progress-label" id="sidebar-prog-label">0 / 5 бүлэг</div>
+    </div>
+
+    <nav class="sidebar-nav" id="sidebar-nav">
+      <!-- generated by JS -->
+    </nav>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <button class="menu-btn" onclick="toggleSidebar()" title="Цэс">☰</button>
+      <div class="breadcrumb" id="breadcrumb">Нүүр хуудас</div>
+      <div class="view-tabs">
+        <button class="view-tab active" id="tab-rm" onclick="switchView('roadmap')">Замын зураг</button>
+        <button class="view-tab" id="tab-rd" onclick="switchView('reader')">Уншлага</button>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content-area" id="content-area">
+
+      <!-- ROADMAP VIEW -->
+      <div class="roadmap-view" id="roadmap-view">
+        <div class="rm-hero">
+          <div class="rm-hero-label">Иргэний Боловсрол</div>
+          <h1>Сурлагын замын зураг</h1>
+          <p>Бүлэг бүрийг дарж дэд сэдвүүдийг харна уу. Аль нэг сэдвийг дарж уншлага руу шилжинэ.</p>
+          <div class="rm-stats">
+            <div class="rm-stat"><div class="rm-stat-n">5</div><div class="rm-stat-l">бүлэг</div></div>
+            <div class="rm-stat"><div class="rm-stat-n">20</div><div class="rm-stat-l">сэдэв</div></div>
+            <div class="rm-stat"><div class="rm-stat-n">94</div><div class="rm-stat-l">хуудас</div></div>
+          </div>
+        </div>
+
+        <div class="rm-track" id="rm-track">
+          <div class="rm-vline"></div>
+          <!-- generated by JS -->
+        </div>
+      </div>
+
+      <!-- READER VIEW -->
+      <div class="reader-view" id="reader-view">
+        <!-- generated by JS -->
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+const CHAPTERS = [
+  {
+    num: "I", short: "1",
+    title: "Орон нутгийн өөрөө удирдах ёс",
+    pages: "6–22",
+    sections: [
+      {
+        num: "1.1", title: "Орон нутгийн өрчин ягваад чухал вэ?", page: 6,
+        body: [
+          "Орон нутгийн өрчин буюу хүрээлэн буй орчин нь иргэдийн өдөр тутмын амьдралд шууд нөлөөлдөг. Цэвэр агаар, аюулгүй гудамж, тохилог цэцэрлэгт хүрээлэн зэрэг нь иргэдийн эрүүл мэнд, аюулгүй байдлын үндэс болдог.",
+          "Иргэд өөрсдийн нутгийн орчноо сайжруулах, хамгаалахад идэвхтэй оролцох нь ардчилсан нийгмийн чухал шинж юм. Орон нутгийн асуудлыг хамгийн сайн мэддэг нь тухайн нутгийн иргэд өөрсдөө юм."
+        ],
+        keypoints: [
+          "Орон нутгийн орчин иргэдийн амьдралын чанарт шууд нөлөөлдөг",
+          "Иргэд нутгийн орчноо хамгаалах эрх, үүрэгтэй",
+          "Хамтын ажиллагаа нь орон нутгийн хөгжлийн гол хүч"
+        ]
+      },
+      {
+        num: "1.2", title: "Орон нутгийн амьдрал тулгамдаж буй асуудлыг хэрхэн ойлгох вэ?", page: 12,
+        body: [
+          "Тулгамдсан асуудлыг ойлгохын тулд иргэд өдөр тутмын амьдралдаа тулгарч буй бодит бэрхшээлүүдийг анхааралтай ажиглах хэрэгтэй. Нийтийн тээвэр, боловсрол, эрүүл мэнд, дэд бүтэц зэрэг олон салбарт асуудлууд тулгардаг.",
+          "Асуудлыг зөвхөн өөрийн туршлагаар бус нийт иргэдийн үүднээс харж, судалгаа шинжилгээ хийх нь зүйтэй. Орон нутгийн хурал, иргэдийн санал асуулга зэрэг нь асуудлыг илрүүлэх чухал арга хэрэгсэл болдог."
+        ],
+        keypoints: [
+          "Тулгамдсан асуудлыг бодитоор тодорхойлох нь чухал",
+          "Иргэдийн санал, туршлагыг цуглуулж судлах",
+          "Нийтлэг асуудлыг нийтийн хүчээр шийдвэрлэнэ"
+        ]
+      },
+      {
+        num: "1.3", title: "Орон нутгийн шийдвэрлэхэд хүүхдүүд хувь нэмрээ оруулах нь", page: 18,
+        body: [
+          "Хүүхдүүд нь ирээдүйн иргэд болохын хувьд орон нутгийн асуудалд санаа тавьж, шийдэл санал болгох бүрэн эрхтэй. Сурагчдын зөвлөл, залуучуудын байгуулллага зэрэгт оролцсоноор хүүхдүүд иргэний оролцооны дадлага эзэмшдэг.",
+          "Хүүхдийн нүдээр харахад насанд хүрэгчдэд анзаарагдахгүй олон асуудал харагдаж болно. Тоглоомын талбай, сургуулийн орчин, замын аюулгүй байдал зэрэг асуудалд хүүхдүүдийн санал маш чухал үүрэг гүйцэтгэдэг."
+        ],
+        keypoints: [
+          "Хүүхдүүд нийгмийн идэвхтэй гишүүн",
+          "Сурагчдын зөвлөлөөр дамжуулан оролцоно",
+          "Хүүхдийн санал, дуу хоолойг сонсох нь чухал"
+        ]
+      },
+      {
+        num: "1.4", title: "Бүлгийн дүгнэлт", page: 22,
+        body: [
+          "Орон нутгийн өөрөө удирдах ёс нь иргэдийн идэвхтэй оролцол дээр суурилдаг. Нутгийн иргэд өөрсдийн орчноо хамгаалж, тулгамдсан асуудлаа хамтран шийдвэрлэх замаар бие даасан, хөгжингүй нийгмийг бүрдүүлж болно.",
+          "Хүүхдүүд эхлэн сургуулийн орчинд иргэний оролцооны үндсийг эзэмшиж, томд нь нийгмийн бүрэн эрхт иргэн болж өсдөг."
+        ],
+        keypoints: [
+          "Иргэдийн оролцол нь ардчилсан нийгмийн тулгуур",
+          "Орон нутгийн хөгжил хамтын хүчнээс эхэлнэ",
+          "Хүүхдийн оролцооны эрхийг хүндэтгэх нь чухал"
+        ]
+      }
+    ]
+  },
+  {
+    num: "II", short: "2",
+    title: "Хувь хүн ба соёл",
+    pages: "25–39",
+    sections: [
+      {
+        num: "2.1", title: "Бид нутийнхаа ёв соёлоор бахархдаг", page: 25,
+        body: [
+          "Монгол хүн бүр өвөг дээдсээсээ уламжлан ирсэн баялаг соёл, түүхтэй. Уртын дуу, хөөмий, морин хуур, бичиг үсэг, нүүдлийн соёл иргэншил зэрэг нь дэлхийд хосгүй өв юм.",
+          "Соёлоороо бахархах нь зөвхөн өнгөрсөн үеийг эргэн санах биш, харин тэр уламжлалыг амьдралдаа хэрэгжүүлж, дараагийн үедээ хүргэх амлалт юм."
+        ],
+        keypoints: [
+          "Монголын соёл нь дэлхийн өвд бичигдсэн",
+          "Уламжлалыг хайрлаж, хамгаалах хэрэгтэй",
+          "Соёлоо дараагийн үед дамжуулах үүрэгтэй"
+        ]
+      },
+      {
+        num: "2.2", title: "Соёл бол хэм хэмжээ мөн", page: 30,
+        body: [
+          "Соёл нь зан заншил, уламжлал, хэм хэмжээний нийлбэр цогц юм. Хүмүүс нийгэмд хэрхэн харилцах, хэрхэн биеэ авч явах талаарх зан үйлийн дүрмийг соёл тодорхойлдог.",
+          "Монгол соёлд зочин хүндэтгэх, ахмадаа дээдлэх, байгалиа хамгаалах зэрэг нь хэм хэмжээний илрэл юм. Эдгээр хэм хэмжээ нь нийгмийн эв нэгдлийг хадгалахад тусалдаг."
+        ],
+        keypoints: [
+          "Соёл нь нийгмийн хэм хэмжээг тодорхойлно",
+          "Хэм хэмжээ нь хүмүүсийн харилцааг зохицуулдаг",
+          "Эерэг хэм хэмжээг дэмжиж хөгжүүлэх хэрэгтэй"
+        ]
+      },
+      {
+        num: "2.3", title: "Соёл хэрхэн өөрчлөгддөг вэ?", page: 35,
+        body: [
+          "Соёл нь хөлдүү биш, харин цаг үетэйгээ хамт хувьсан өөрчлөгддөг амьд тогтолцоо юм. Нийгмийн хэрэгцээ, технологийн хөгжил, бусад соёлтой харилцах нь соёлын өөрчлөлтийг бий болгодог.",
+          "Чухал нь эерэг өөрчлөлтийг хүлээн авахдаа гол өвөрмөц чанараа хадгалах явдал юм. Монгол соёл орчин үеийн хэрэгцээтэй уялдуулан хөгжиж байхдаа уламжлалаа алдахгүй байх нь чухал."
+        ],
+        keypoints: [
+          "Соёл нь цаг хугацааны хамт хувьсдаг",
+          "Гадны нөлөөллийг шүүн авах нь ухаалаг",
+          "Уламжлалаа хадгалж, шинэчлэлийг хослуулна"
+        ]
+      },
+      {
+        num: "2.4", title: "Бүлгийн дүгнэлт", page: 39,
+        body: [
+          "Соёл нь хувь хүн болон нийгмийн биеийг бүрдүүлдэг чухал элемент юм. Монгол соёлоо хайрлаж, хамгаалж, дэлхийд таниулах нь эх орноо хайрлах илрэл болдог.",
+          "Соёлын хэм хэмжээ нь нийгмийн зохион байгуулалтыг хангаж, хүмүүсийн хооронд итгэлцэл, хамтын ажиллагааг бий болгодог."
+        ],
+        keypoints: [
+          "Соёл нь хувь хүн ба нийгмийг холбоно",
+          "Монгол соёлыг дэлхийд таниулах үүрэгтэй",
+          "Соёлын хэм хэмжээ нь нийгмийн тогтвортой байдлыг хангана"
+        ]
+      }
+    ]
+  },
+  {
+    num: "III", short: "3",
+    title: "Хувь хүн ба эдийн засаг",
+    pages: "43–59",
+    sections: [
+      {
+        num: "3.1", title: "Орон нутгийн эдийн засгийн бүтцийн талаар бид юу мэдэх вэ?", page: 43,
+        body: [
+          "Орон нутгийн эдийн засаг нь газар тариалан, мал аж ахуй, үйлдвэрлэл, үйлчилгээний салбараас бүрддэг. Эдгээр салбарууд хоорондоо харилцан хамааралтай бөгөөд нийлээд орон нутгийн эдийн засгийн суурийг бүрдүүлдэг.",
+          "Эдийн засгийн бүтцийг ойлгох нь иргэдэд аль салбарт хөдөлмөрлөх, хөрөнгө оруулах, бизнес эрхлэх сонголт хийхэд тусалдаг."
+        ],
+        keypoints: [
+          "Олон талт эдийн засаг нь тогтвортой байдлыг хангана",
+          "Газар тариалан, үйлчилгээ, үйлдвэрлэл — гурван тулгуур",
+          "Эдийн засгийн мэдлэг нь ухаалаг шийдвэр гаргахад туслана"
+        ]
+      },
+      {
+        num: "3.2", title: "Орон нутгийн зах зээл", page: 51,
+        body: [
+          "Зах зээл нь бараа, үйлчилгээний солилцоо явагддаг газар бөгөөд хүн ам, орлого, хэрэгцээ шаардлагын харилцан үйлчлэлийг тусгадаг. Орон нутгийн зах зээл нь тухайн нутгийн хүмүүсийн амьжиргааны голлох эх үүсвэр болдог.",
+          "Зах зээлийн үнэ ханш, бараа бүтээгдэхүүний нийлүүлэлт, эрэлт хэрэгцээ зэрэг ойлголтуудыг мэдэх нь иргэдэд ухаалаг хэрэглэгч болоход тусалдаг."
+        ],
+        keypoints: [
+          "Зах зээл нь бараа, үйлчилгээний солилцооны газар",
+          "Эрэлт, нийлүүлэлт нь үнийг тодорхойлно",
+          "Ухаалаг хэрэглэгч болох нь чухал"
+        ]
+      },
+      {
+        num: "3.3", title: "Жижиг бизнесийн төсөл", page: 55,
+        body: [
+          "Жижиг бизнес нь орон нутгийн эдийн засгийн амин сүнс юм. Гар урлал, худалдаа, үйлчилгээний газар, хүнсний цех зэрэг жижиг бизнесүүд нь хөдөлмөр эрхлэлтийг нэмэгдүүлж, орон нутгийн мөнгийг дотооддоо эргэлддэг болгодог.",
+          "Бизнесийн санаа, бизнес төлөвлөгөө, санхүүжилт, маркетинг зэрэг ойлголтуудыг эрт эзэмшсэн хүүхдүүд ирээдүйд амжилттай аж ахуйч болдог."
+        ],
+        keypoints: [
+          "Жижиг бизнес нь орон нутгийн эдийн засгийг тэтгэнэ",
+          "Бизнес төлөвлөгөө нь амжилтын суурь",
+          "Аж ахуйчлалын ур чадварыг эрт хөгжүүлэх хэрэгтэй"
+        ]
+      },
+      {
+        num: "3.4", title: "Бүлгийн дүгнэлт", page: 59,
+        body: [
+          "Эдийн засгийн мэдлэгтэй иргэд нь зах зээлийн нөхцөлд ухаалаг шийдвэр гаргаж, хөдөлмөрийн зах зээлд өрсөлдөх чадвартай болдог. Жижиг бизнес эрхлэх нь орон нутагтаа хувь нэмрээ оруулах нэг чухал арга зам юм."
+        ],
+        keypoints: [
+          "Эдийн засгийн боловсрол нь практик чадвар",
+          "Орон нутгийн хөгжилд хувь нэмэр оруулах боломжтой",
+          "Жижиг бизнес нь том боломжийн эхлэл"
+        ]
+      }
+    ]
+  },
+  {
+    num: "IV", short: "4",
+    title: "Хүний эрх ба хууль",
+    pages: "63–79",
+    sections: [
+      {
+        num: "4.1", title: "Хүний эрхийн талаарх тэмцлийн түүхийг бүрдүүлсэн нь", page: 63,
+        body: [
+          "Хүний эрхийн түүх нь хүмүүс зовлон зүдгүүр, тэгш бус байдлын эсрэг тэмцэж ялалт байгуулсан урт гинжин хэлхээ юм. Боолчлолын эсрэг тэмцэл, эмэгтэйчүүдийн эрхийн хөдөлгөөн, колончлолын эсрэг тэмцэл зэрэг нь хүний эрхийн хөгжлийн томоохон эргэлтүүд болсон.",
+          "1948 онд НҮБ-ын Хүний эрхийн түгээмэл тунхаглалыг батлснаар хүн бүр эрх тэгш, чөлөөтэй байх зарчмыг олон улсын хэмжээнд баталгаажуулсан."
+        ],
+        keypoints: [
+          "Хүний эрх бол тэмцлийн үр дүн",
+          "1948 оны НҮБ-ын Тунхаглал — чухал хубилгаан",
+          "Хүний эрхийн тэмцэл өнөөдөр ч үргэлжилж байна"
+        ]
+      },
+      {
+        num: "4.2", title: "Хүний эрхийн зарчмуудыг мэддэг үү?", page: 66,
+        body: [
+          "Хүний эрхийн үндсэн зарчмууд нь: бүх нийтийн байдал (хүн бүрт хамаарна), хуваагдашгүй байдал (нэг эрхийг нөгөөгөөс ялгаж хасаж болохгүй), хамтат байдал (эрх хоорондоо хамаарна) юм.",
+          "Амьд явах эрх, боловсрол эзэмших эрх, эрүүл мэндийн тусламж авах эрх, санал бодлоо чөлөөтэй илэрхийлэх эрх зэрэг нь хүн бүрт хамаарах үндсэн эрхүүд юм."
+        ],
+        keypoints: [
+          "Хүний эрх нь бүх нийтийн, хуваагдашгүй",
+          "Амьдрах, боловсрол, эрүүл мэнд — үндсэн эрхүүд",
+          "Эрхээ мэдэх нь хамгаалалтын эхний алхам"
+        ]
+      },
+      {
+        num: "4.3", title: "Эрх тэгш байдал ягваад чухал вэ?", page: 70,
+        body: [
+          "Эрх тэгш байдал нь хүн бүрд адил боломж, адил хандлага олгодог нийгмийн шударга ёсны үндэс юм. Хэн ч угсаа, хүйс, шашин шүтлэг, эд баялагийн ялгаагаар ялгаварлан гадуурхагдах ёсгүй.",
+          "Эрх тэгш нийгэм нь илүү бүтээлч, хөгжингүй байдаг. Учир нь нийгмийн бүх гишүүд чадавхаа нийт хөгжилд зориулах боломжтой болдог."
+        ],
+        keypoints: [
+          "Эрх тэгш байдал нь шударга нийгмийн суурь",
+          "Ялгаварлан гадуурхалт нь хууль бус",
+          "Тэгш нийгэм нь хөгжингүй нийгэм"
+        ]
+      },
+      {
+        num: "4.4", title: "Хүний эрхийг хэрхэн хамгаалах нь", page: 74,
+        body: [
+          "Хүний эрхийг хамгаалах механизм нь олон улсын болон үндэсний хэмжээнд ажилладаг. НҮБ-ын хүний эрхийн байгуулллагууд, хүний эрхийн комисс, шүүх зэрэг нь хамгаалалтын тогтолцоонд орддог.",
+          "Иргэд өөрсдийн эрхийг мэдэж, эрх зөрчигдсөн тохиолдолд холбогдох байгуулллагад хандах нь чухал. Иргэний нийгмийн байгуулллагууд нь эрхийн хамгааллын чухал хүч болдог."
+        ],
+        keypoints: [
+          "Олон улсын болон үндэсний хамгаалалтын тогтолцоо байна",
+          "Иргэд өөрсдийн эрхийг хамгаалж чадна",
+          "Иргэний нийгэм нь эрхийн харуул"
+        ]
+      },
+      {
+        num: "4.5", title: "Хүний эрхийг хангах нь нутгийн захиргааны үүрэг болох нь", page: 76,
+        body: [
+          "Орон нутгийн захиргаа нь иргэдийн үндсэн эрхийг хангах үүрэгтэй. Цэвэр усны хангамж, боловсролын тэгш боломж, нийгмийн халамж, эрүүл мэндийн үйлчилгээ зэрэг нь захиргааны үндсэн үүрэгт багтдаг.",
+          "Иргэд нутгийн захиргааг хянаж, шаардлага тавих эрхтэй. Захиргаанд хариуцлага тооцох нь ардчилсан нийгмийн чухал элемент юм."
+        ],
+        keypoints: [
+          "Нутгийн захиргаа нь иргэдийн эрхийг хамгаалах үүрэгтэй",
+          "Иргэд захиргааг хянах эрхтэй",
+          "Хариуцлагатай засаглал нь хөгжлийн түлхүүр"
+        ]
+      },
+      {
+        num: "4.6", title: "Бүлгийн дүгнэлт — Хүний эрхэд зөлтэй орон нутаг", page: 79,
+        body: [
+          "Хүний эрхийг хүндэтгэдэг орон нутаг нь иргэдийнхээ аз жаргал, хөгжил цэцэглэлтийг хангадаг. Эрхийн тухай мэдлэгтэй, эрхийнхээ төлөө тэмцдэг идэвхтэй иргэд нь ардчилсан нийгмийн тулгуур юм."
+        ],
+        keypoints: [
+          "Хүний эрхийг хүндэтгэх нь нийгмийн дэвшлийн үндэс",
+          "Мэдлэгтэй иргэд нь эрхийнхээ харуул",
+          "Орон нутгийн хөгжил нь эрхийн баталгаанаас эхэлнэ"
+        ]
+      }
+    ]
+  },
+  {
+    num: "V", short: "5",
+    title: "Орон нутгийн удирдлага",
+    pages: "82–94",
+    sections: [
+      {
+        num: "5.1", title: "Орон нутгийн удирдлагын эрх мэдэл хаанаас авдаг вэ?", page: 82,
+        body: [
+          "Ардчилсан нийгэмд засгийн эрх мэдэл иргэдээс эх авдаг. Сонгуулиар сонгосон удирдлага нь иргэдийн итгэлцлийг авч, тэдний нэрийн өмнөөс шийдвэр гаргах эрх олж авдаг.",
+          "Орон нутгийн засаг захиргаа нь улсын засаг захиргааны нэг шат бөгөөд тухайн нутгийн иргэдийн амьдрал, хөгжилд хамгийн ойрхон холбогдсон нэгж юм."
+        ],
+        keypoints: [
+          "Засгийн эрх мэдэл иргэдийн итгэлцлээс үүснэ",
+          "Сонгууль нь ардчиллын үндсэн механизм",
+          "Орон нутгийн засаг иргэдэд хамгийн ойр"
+        ]
+      },
+      {
+        num: "5.2", title: "Орон нутагт тулгамдаж буй асуудлыг хэрхэн шийдвэрлэх вэ?", page: 87,
+        body: [
+          "Орон нутгийн асуудлыг шийдвэрлэхэд иргэд болон удирдлагын хамтын ажиллагаа зайлшгүй шаардлагатай. Хурал зөвлөгөөн, иргэдийн саналыг авах, нийтийн ажил зэрэг нь хамтын шийдлийн жишээ юм.",
+          "Асуудлыг тодорхойлох, шийдлийн хувилбар боловсруулах, хэрэгжүүлэх, үр дүнг үнэлэх — энэ дөрвөн алхам нь аливаа асуудлыг шийдвэрлэх үндсэн арга юм."
+        ],
+        keypoints: [
+          "Иргэд болон удирдлагын хамтын ажиллагаа чухал",
+          "Асуудлыг системтэйгээр шийдвэрлэх",
+          "Үр дүнг тасралтгүй үнэлж, засч сайжруулна"
+        ]
+      },
+      {
+        num: "5.3", title: "Орон нутгийн тусгаар шийдвэр гаргахад бид хэрхэн оролцох вэ?", page: 90,
+        body: [
+          "Иргэд санал хураалтад оролцох, нутгийн иргэдийн хуралд суух, өргөдөл, гомдол гаргах, сонгуульд нэр дэвшигчийг дэмжих зэргээр шийдвэр гаргалтад оролцох олон боломжтой.",
+          "Залуус өөрсдийн насны хэрэгцээ, асуудлыг хамгийн сайн мэддэг тул залуучуудын санал нь орон нутгийн шийдвэрт чухал хувь нэмэр оруулдаг."
+        ],
+        keypoints: [
+          "Санал хураалт, хурал, өргөдөл — оролцооны хэлбэрүүд",
+          "Залуучуудын дуу хоолой нийгэмд чухал",
+          "Идэвхтэй иргэн байхыг хүн бүр эрмэлзэх ёстой"
+        ]
+      },
+      {
+        num: "5.4", title: "Бүлгийн дүгнэлт", page: 94,
+        body: [
+          "Орон нутгийн удирдлага нь иргэдийн итгэлцэл, оролцол, хамтын хүч дээр суурилдаг. Иргэд мэдлэгтэй, идэвхтэй байх тусам удирдлага илүү хариуцлагатай, үр дүнтэй ажилладаг.",
+          "Ирээдүйн идэвхтэй иргэн болохын тулд орон нутгийнхаа асуудалд сонирхолтой хандаж, шийдвэр гаргалтад оролцох дадлага эзэмших нь чухал юм."
+        ],
+        keypoints: [
+          "Хариуцлагатай засаглал нь иргэдийн идэвхээс хамаарна",
+          "Орон нутгийн хөгжил нь хамтын үр дүн",
+          "Идэвхтэй иргэн болох нь хүн бүрийн үүрэг"
+        ]
+      }
+    ]
+  }
+];
+
+let currentView = 'roadmap';
+let currentChapter = 0;
+let openChapters = new Set();
+let visitedChapters = new Set();
+
+function buildSidebar() {
+  const nav = document.getElementById('sidebar-nav');
+  nav.innerHTML = CHAPTERS.map((ch, ci) => `
+    <div class="nav-chapter">
+      <button class="nav-ch-btn ${ci===0?'active':''}" id="nav-ch-${ci}" onclick="sidebarChClick(${ci})">
+        <span class="nav-ch-dot" id="nav-dot-${ci}">${ch.short}</span>
+        <span class="nav-ch-title">
+          <div class="nav-ch-num">БҮЛЭГ ${ch.num}</div>
+          <div>${ch.title}</div>
+        </span>
+        <span class="nav-ch-arrow">›</span>
+      </button>
+      <div class="nav-sections" id="nav-secs-${ci}">
+        ${ch.sections.map((s,si)=>`
+          <button class="nav-sec-btn" id="nav-sec-${ci}-${si}" onclick="goToSection(${ci},${si})">
+            <span class="nav-sec-num">${s.num}</span>
+            <span>${s.title}</span>
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function sidebarChClick(ci) {
+  const secs = document.getElementById(`nav-secs-${ci}`);
+  const btn = document.getElementById(`nav-ch-${ci}`);
+  const isOpen = secs.classList.contains('open');
+  document.querySelectorAll('.nav-sections').forEach(el=>el.classList.remove('open'));
+  document.querySelectorAll('.nav-ch-btn').forEach(el=>el.classList.remove('open'));
+  if (!isOpen) { secs.classList.add('open'); btn.classList.add('open'); }
+  goToChapter(ci);
+}
+
+function goToChapter(ci) {
+  currentChapter = ci;
+  document.querySelectorAll('.nav-ch-btn').forEach((el,i)=>{
+    el.classList.toggle('active', i===ci);
+  });
+  visitedChapters.add(ci);
+  updateProgress();
+  switchView('reader');
+  renderReader(ci);
+}
+
+function goToSection(ci, si) {
+  goToChapter(ci);
+  setTimeout(()=>{
+    const el = document.getElementById(`sec-block-${si}`);
+    if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+  }, 100);
+}
+
+function switchView(view) {
+  currentView = view;
+  const rmv = document.getElementById('roadmap-view');
+  const rdv = document.getElementById('reader-view');
+  const tabRm = document.getElementById('tab-rm');
+  const tabRd = document.getElementById('tab-rd');
+  if (view === 'roadmap') {
+    rmv.classList.remove('hidden');
+    rdv.classList.remove('active');
+    tabRm.classList.add('active');
+    tabRd.classList.remove('active');
+    document.getElementById('breadcrumb').innerHTML = 'Нүүр хуудас';
+  } else {
+    rmv.classList.add('hidden');
+    rdv.classList.add('active');
+    tabRm.classList.remove('active');
+    tabRd.classList.add('active');
+    document.getElementById('breadcrumb').innerHTML =
+      `Бүлэг ${CHAPTERS[currentChapter].num} &rsaquo; <span>${CHAPTERS[currentChapter].title}</span>`;
+  }
+  document.getElementById('content-area').scrollTop = 0;
+}
+
+function renderReader(ci) {
+  const ch = CHAPTERS[ci];
+  const prev = ci > 0 ? `<button class="rf-btn" onclick="goToChapter(${ci-1})">← Өмнөх бүлэг</button>` : '<span></span>';
+  const next = ci < CHAPTERS.length-1 ? `<button class="rf-btn primary" onclick="goToChapter(${ci+1})">Дараагийн бүлэг →</button>` : '<button class="rf-btn primary" onclick="switchView(\'roadmap\')">Замын зураг ↗</button>';
+
+  const sectionsHtml = ch.sections.map((s, si) => `
+    <div class="section-block" id="sec-block-${si}">
+      <div class="sec-heading">
+        <div class="sec-heading-num">${s.num}</div>
+        <div class="sec-heading-title">${s.title}</div>
+        <div class="sec-page">тал. ${s.page}</div>
+      </div>
+      <div class="sec-body">
+        ${s.body.map(p=>`<p>${p}</p>`).join('')}
+        <div class="key-points">
+          <div class="kp-title">Гол санаанууд</div>
+          ${s.keypoints.map(kp=>`<div class="kp-item"><span class="kp-dot"></span><span>${kp}</span></div>`).join('')}
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  const lastSec = ch.sections[ch.sections.length-1];
+  const dugnel = `
+    <div class="dugnel-box">
+      <div class="dugnel-label">Бүлгийн дүгнэлт</div>
+      <p>${lastSec.body[0]}</p>
+    </div>
+  `;
+
+  document.getElementById('reader-view').innerHTML = `
+    <div class="chapter-nav">
+      <button class="ch-nav-btn" onclick="switchView('roadmap')">← Замын зураг</button>
+      <div class="ch-nav-spacer"></div>
+      <span style="font-size:12px;color:var(--muted)">Бүлэг ${ci+1} / ${CHAPTERS.length}</span>
+    </div>
+    <div class="ch-label">БҮЛЭГ ${ch.num}</div>
+    <div class="ch-title">${ch.title}</div>
+    ${sectionsHtml.split('</div>\n    <div class="section-block"').slice(0,-1).join('</div>\n    <div class="section-block"')}${sectionsHtml.split('<div class="section-block"').slice(-1)[0].split('</div>').slice(0,-2).join('</div>')}
+    ${dugnel}
+    <div class="reader-footer">${prev}${next}</div>
+  `;
+
+  // re-render properly
+  document.getElementById('reader-view').innerHTML = `
+    <div class="chapter-nav">
+      <button class="ch-nav-btn" onclick="switchView('roadmap')">← Замын зураг</button>
+      <div class="ch-nav-spacer"></div>
+      <span style="font-size:12px;color:var(--muted)">Бүлэг ${ci+1} / ${CHAPTERS.length}</span>
+    </div>
+    <div class="ch-label">БҮЛЭГ ${ch.num}</div>
+    <div class="ch-title">${ch.title}</div>
+    ${ch.sections.map((s,si)=>`
+      <div class="section-block" id="sec-block-${si}">
+        <div class="sec-heading">
+          <div class="sec-heading-num">${s.num}</div>
+          <div class="sec-heading-title">${s.title}</div>
+          <div class="sec-page">тал. ${s.page}</div>
+        </div>
+        <div class="sec-body">
+          ${s.body.map(p=>`<p>${p}</p>`).join('')}
+          <div class="key-points">
+            <div class="kp-title">Гол санаанууд</div>
+            ${s.keypoints.map(kp=>`<div class="kp-item"><span class="kp-dot"></span><span>${kp}</span></div>`).join('')}
+          </div>
+        </div>
+      </div>
+    `).join('')}
+    <div class="dugnel-box">
+      <div class="dugnel-label">Бүлгийн дүгнэлт</div>
+      <p>${ch.sections[ch.sections.length-1].body[0]}</p>
+    </div>
+    <div class="reader-footer">${prev}${next}</div>
+  `;
+}
+
+function buildRoadmap() {
+  const track = document.getElementById('rm-track');
+  track.innerHTML += CHAPTERS.map((ch, ci) => `
+    <div class="rm-stop" id="rm-stop-${ci}">
+      <div class="rm-dot" onclick="rmToggle(${ci})"></div>
+      <div class="rm-header" onclick="rmToggle(${ci})">
+        <span class="rm-badge">БҮЛЭГ ${ch.num}</span>
+        <span class="rm-title">${ch.title}</span>
+        <span class="rm-pages">тал. ${ch.pages}</span>
+        <span class="rm-arrow">▾</span>
+      </div>
+      <div class="rm-body" id="rm-body-${ci}">
+        <div class="rm-body-inner">
+          ${ch.sections.map((s,si)=>`
+            <div class="rm-sec" onclick="goToSection(${ci},${si})">
+              <span class="rm-sec-num">${s.num}</span>
+              <span class="rm-sec-title">${s.title}</span>
+              <span class="rm-sec-pg">тал. ${s.page}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function rmToggle(ci) {
+  const stop = document.getElementById(`rm-stop-${ci}`);
+  const wasOpen = stop.classList.contains('open');
+  document.querySelectorAll('.rm-stop').forEach(el=>el.classList.remove('open'));
+  if (!wasOpen) stop.classList.add('open');
+}
+
+function updateProgress() {
+  const pct = Math.round(visitedChapters.size / CHAPTERS.length * 100);
+  document.getElementById('sidebar-progress').style.width = pct + '%';
+  document.getElementById('sidebar-prog-label').textContent = visitedChapters.size + ' / ' + CHAPTERS.length + ' бүлэг';
+}
+
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  if (window.innerWidth <= 680) {
+    sb.classList.toggle('mob-open');
+  } else {
+    sb.classList.toggle('collapsed');
+  }
+}
+
+buildSidebar();
+buildRoadmap();
+renderReader(0);
+visitedChapters.add(0);
+updateProgress();
+
+const secs0 = document.getElementById('nav-secs-0');
+const btn0 = document.getElementById('nav-ch-0');
+if(secs0) { secs0.classList.add('open'); btn0.classList.add('open'); }
+</script>
+</body>
+</html>
